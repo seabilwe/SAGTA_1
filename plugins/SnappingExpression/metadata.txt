@@ -1,0 +1,9 @@
+[general]
+name=Server expression
+description=Calculate magnetic declination
+about=Calculate magnetic declination
+version=1.0
+qgisMinimumVersion=3.4
+author=Admire Nyakudya
+email=admire@kartoza.com
+server=True
