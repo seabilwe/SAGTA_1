@@ -1,10 +1,12 @@
 import json
 from datetime import datetime
 from math import floor
-from os import environ
-from qgis.core import QgsMessageLog, Qgis, QgsExpression, QgsGeometry, QgsRectangle
-from qgis.utils import qgsfunction
 from urllib import parse, request
+from urllib.error import HTTPError
+
+from qgis.core import QgsMessageLog, Qgis, QgsExpression
+from qgis.utils import qgsfunction
+from qgis.server import *
 
 
 def json_response(url):
