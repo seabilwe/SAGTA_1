@@ -46,5 +46,6 @@ you have cloned previously into the folder `lizmap/plugins/`
 you have previously cloned to `lizmap/instances/`
 * Get the services up by running `docker-compose up -d`
 * The default login credentials is `admin:admin`
+* To activate the Profile tool follow the instructions specified in 
 
 
