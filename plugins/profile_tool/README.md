@@ -18,7 +18,7 @@ get it running in a docker-compose workflow and incorporate it with lizmap docke
     altiProfil  altiProfilAdmin  altiProfilAdmin.png  altiProfil.jpeg
     ```
     into `lizmap/var/lizmap-modules`
-
+* Replace the file `https://github.com/kartoza/SAGTA/blob/main/plugins/profile_tool/altiServicesFromDB.class.php` to the folder `lizmap/var/lizmap-modules/altiProfil/classes`
 * Copy `altiProfil.ini.php` into `lizmap/var/lizmap-config`
 * Update `lizmap/var/lizmap-config/localconfig.ini.php` to add the following
     ```
@@ -28,17 +28,18 @@ get it running in a docker-compose workflow and incorporate it with lizmap docke
     ```
 * Add a database connection string to `lizmap/var/lizmap-config/profiles.ini.php`
 
-Use the example below
-    ```
-    [jdb:altiProfil]
-    driver=pgsql
-    database=gis
-    host=db
-    user=docker
-    password=docker
-    port=5432
-    search_path=public
-    ```
+  ``` 
+      [jdb:altiProfil]
+      driver=pgsql
+      database=gis
+      host=db
+      user=docker
+      password=docker
+      port=5432
+      search_path=public
+  ```
+Use the example above
+    
 * Execute into the running lizmap container and execute the following
     ``` 
     docker-compose exec lizmap ash
