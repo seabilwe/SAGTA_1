@@ -1,12 +1,18 @@
-# SAGTA
-SAGTA Map downloader
+# SAGTA Map downloader
 
-## Setup
+## Map specifications
 
-This repo is based on the work provided from [lizmap](git@github.com:3liz/lizmap-docker-compose.git)
-To get a running version of the repo use the following instructions
+Maps are defined in QGIS projects that need to be synced to the correct path on the server. 
 
-* Clone the sagta repository into a separate folder.
+Maps must follow [these specifications](https://github.com/kartoza/SAGTA/wiki/SAGTA-Map-Downloader-Specifications)
+
+## System Setup
+
+This repo is based on the work provided by [lizmap](git@github.com:3liz/lizmap-docker-compose.git).
+
+To get a running version of the repo use the following instructions:
+
+* Clone the SAGTA repository into a separate folder.
 
     ```bash
     git clone git@github.com:kartoza/SAGTA.git
@@ -40,12 +46,10 @@ env variable to match the path for the folders in the current directory
   LIZMAP_PROJECTS=/tmp/lizmap/docker-compose/lizmap/instances
   LIZMAP_DIR=/tmp/lizmap/docker-compose/lizmap 
   ```
-* Copy the `plugins` folder from the [SAGTA plugin folder](https://github.com/kartoza/SAGTA/tree/main/plugins) 
-you have cloned previously into the folder `lizmap/plugins/`
-* Copy the QGIS projects from the [SAGTA QGIS projects](https://github.com/kartoza/SAGTA/tree/main/projects/map_downloader) 
-you have previously cloned to `lizmap/instances/`
+* Copy the `plugins` folder from the [SAGTA plugin folder](https://github.com/kartoza/SAGTA/tree/main/plugins) you cloned previously into the folder `lizmap/plugins/`
+* Copy the QGIS projects from the [SAGTA QGIS projects](https://github.com/kartoza/SAGTA/tree/main/projects/map_downloader) you previously cloned to `lizmap/instances/`
 * Get the services up by running `docker-compose up -d`
-* The default login credentials is `admin:admin`
+* The default login credentials are `admin:admin`
 * To activate the Profile tool follow the instructions specified in 
 
 
