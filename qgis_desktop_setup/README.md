@@ -9,9 +9,18 @@ Some projects also require custom scripts to render properly i.e labels in topog
 # Procedure
 
 * Git clone the SAGTA repository.
-* Copy the QGIS scripts and add them in QGIS as 
-[custom functions](https://www.qgistutorials.com/en/docs/3/custom_python_functions.html)
-* Open the QGIS projects and start interacting with them.
+    ```bash
+    git clone git@github.com:kartoza/SAGTA.git
+    cd SAGTA
+    ```
+* Copy the QGIS scripts from the repository and add them to the correct folder in your
+profile folder.
+    ```bash
+    cp ./qgis_desktop_setup/qgis_scripts/* /home/${user}/.local/share/QGIS/QGIS3/profiles/default/python/expressions
+    ```
+
+* Open the QGIS projects `./projects/mapdownloader` or `./projects/mapdownloader_public` using QGIS
+Desktop and start interacting with the projects.
 
 **Note:** We only commit the QGIS projects when significant changes have been made to them
 and annotate the commit message explicitly so that we can revert to a last known working
