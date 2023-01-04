@@ -24,7 +24,7 @@ get it running in a docker-compose workflow and incorporate it with `lizmap` doc
 * Copy the file `altiServicesFromDB.class.php` into the appropriate folder.
 
   ```bash
-  cp -r /home/${user}/deployment/map_downloader/SAGTA/lizmap_plugins/profile_tool/altiServicesFromDB.class.php /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/var/lizmap-modules/altiProfil/classes/
+  cp -r /home/${user}/deployment/map_downloader/SAGTA/plugins/lizmap/profile_tool/altiServicesFromDB.class.php /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/var/lizmap-modules/altiProfil/classes/
   ```
 
 * Copy the following file
