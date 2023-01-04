@@ -10,7 +10,7 @@ Maps must follow [these specifications](https://github.com/kartoza/SAGTA/wiki/SA
 
 This repo is based on the work provided by [lizmap](git@github.com:3liz/lizmap-docker-compose.git).
 
-To get a running version of the repo you can use the following recipes:
+To get a running version of the repo you can use the following methods:
 
 ### Docker-Compose Deployment
 The instructions below assume you are running docker compose version 1. If you are running
@@ -41,7 +41,7 @@ version 2 you will need to replace all instances of `docker-compose` with `docke
 * Copy the `docker-compose.yml` from the `SAGTA` repository into this current one.
 
   ```bash
-  cp -r  /home/${user}/deployment/map_downloader/SAGTA/docker-compose.yml .
+  cp -r  /home/${user}/deployment/map_downloader/SAGTA/deployment/docker-compose.yml .
   ```
 * Copy the `env.example` from the `SAGTA` repository into this folder.
 
@@ -127,4 +127,8 @@ changes are needed. These changes are based on https://github.com/kartoza/lizmap
   
   ```
 
+### kubernetes Deployment
 
+**Note:** This is still a work in progress.
+
+All manifest are available from [sagta-manifests](https://github.com/kartoza/devops/tree/master/rancher-2.x/manifests/projects/sagta)
