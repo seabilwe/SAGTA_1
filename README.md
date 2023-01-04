@@ -13,6 +13,7 @@ This repo is based on the work provided by [lizmap](git@github.com:3liz/lizmap-d
 To get a running version of the repo you can use the following methods:
 
 1). Setup and publishing QGIS Projects
+
 2). Server Deployments
 
 ### Setup and publishing QGIS Projects
@@ -63,13 +64,14 @@ version 2 you will need to replace all instances of `docker-compose` with `docke
   ```bash
   cp -r /home/${user}/deployment/map_downloader/SAGTA/deployment/env.example .env
   ```
-**Note:** Adjust the two paths specified in the `.env` file to reference the correct paths.
 
-  Original copied path:
-  ```bash
-  LIZMAP_PROJECTS=/tmp/lizmap/docker-compose/lizmap/instances
-  LIZMAP_DIR=/tmp/lizmap/docker-compose/lizmap 
-  ```
+* Adjust the two paths specified in `.env` file to reference the correct paths.
+
+    Original copied path:
+    ```bash
+    LIZMAP_PROJECTS=/tmp/lizmap/docker-compose/lizmap/instances
+    LIZMAP_DIR=/tmp/lizmap/docker-compose/lizmap 
+    ```
   Change them to match the following:
   ```bash
   LIZMAP_PROJECTS=/home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/instances
@@ -111,22 +113,20 @@ changes are needed. These changes are based on https://github.com/kartoza/lizmap
 * Open the `docker-compose.yml` file to make some changes.
 * Add the following environment variables to the `lizmap` service in the `docker-compose.yml`
   ```bash
-    CLIENT_ID: add a value here 
-    CLIENT_SECRET: add a value here
-    SAGTA_URL: https://sagta.org.za
-    REDIRECT_URI: https://maps.sagta.org.za/
-    MEMBER_USERNAME: sagta_mapdownloader
-    MEMBER_PASSWORD: add a password here
+  CLIENT_ID: add a value here 
+  CLIENT_SECRET: add a value here
+  SAGTA_URL: https://sagta.org.za
+  REDIRECT_URI: https://maps.sagta.org.za/
+  MEMBER_USERNAME: sagta_mapdownloader
+  MEMBER_PASSWORD: add a password here
   ```
 * Adjust the volumes section in `lizmap` service in the `docker-compose.yml`
-```bash
-    /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/modules/lizmap:/www/lizmap/modules/lizmap
-    /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/modules/view/controllers:/www/lizmap/modules/view/controllers
-```
+  ```bash
+  /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/modules/lizmap:/www/lizmap/modules/lizmap
+  /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/modules/view/controllers:/www/lizmap/modules/view/controllers
+  ```
 * Update the repository adding changes from https://github.com/kartoza/lizmap-web-client
 
-**Note:** For each new version of lizmap web client we need to update our repository with upstream
-changes before we continue the update process.
   ```bash
   cd /home/${user}/deployment/map_downloader/
   git clone git@github.com:kartoza/lizmap-web-client.git
@@ -138,6 +138,8 @@ changes before we continue the update process.
   cp -r ./lizmap/modules/view/controllers/lizMap.classic.php /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/modules/view/controllers/
   cp -r ./lizmap/var/config/admin/auth.coord.ini.php /home/${user}/deployment/map_downloader/lizmap-docker-compose/lizmap/var/lizmap-config/admin/
   ```
+  **Note:** For each new version of lizmap web client we need to update our repository with upstream
+changes before we continue the update process.
 
 * Start the services again
   ```bash
