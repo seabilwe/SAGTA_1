@@ -62,7 +62,15 @@ def map_decl(center_lat, center_long, feature, parent):
     long_hemisphere = 'E'
     mag_model = 'IGRF'
     mag_component = 'd'
-    params = parse.urlencode({'lat1': abs(center_lat), 'lon1': abs(center_long), 'lat1Hemisphere': lat_hemisphere, 'lon1Hemisphere': long_hemisphere, 'startDay': month_day, 'model': mag_model, 'magneticComponent': mag_component, 'resultFormat': 'json', 'startMonth': month})
+   params = parse.urlencode({
+        'lat1': abs(center_lat), 
+        'lon1': abs(center_long), 
+        'startDay': month_day, 
+        'model': mag_model, 
+        'magneticComponent': mag_component, 
+        'resultFormat': 'json', 
+        'startMonth': month
+    })
     mag_url = "http://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?%s" % params
     mag_response_text = json_response(mag_url)
     if mag_response_text is not None:
