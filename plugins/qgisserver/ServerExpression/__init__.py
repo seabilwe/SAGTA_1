@@ -53,7 +53,7 @@ def decimal_degree_2dms(decimal_degree, direction='x'):
 def map_decl(center_lat, center_long, feature, parent):
     dms_center_lat = decimal_degree_2dms(round(center_lat, 4))
     dms_center_long = decimal_degree_2dms(round(center_long, 4))
-    elevation_url = "https://staging.geocontext.kartoza.com/api/v1/geocontext/value/group/%s/%s/elevation_group/?format=json" \
+    elevation_url = "https://geocontext.kartoza.com" \
                     % (center_long, center_lat)
     elevation_response_text = json_response(elevation_url)
     if elevation_response_text is not None:
@@ -63,8 +63,8 @@ def map_decl(center_lat, center_long, feature, parent):
         elevation_value = 'None'
     current_date_time = datetime.now()
     month = current_date_time.month
-    params = parse.urlencode({'lat1': center_lat, 'lon1': center_long, 'resultFormat': 'json', 'startMonth': month})
-    mag_url = "http://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?%s" % params
+    params = parse.urlencode({'lat1': center_lat, 'key': 'zNEw7', 'lon1': center_long, 'resultFormat': 'json', 'startMonth': month})
+    mag_url = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?%s" % params
     mag_response_text = json_response(mag_url)
     if mag_response_text is not None:
         mag_response_json = json.loads(mag_response_text)["result"][0]
