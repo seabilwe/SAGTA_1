@@ -53,7 +53,7 @@ def decimal_degree_2dms(decimal_degree, direction='x'):
 def map_decl(center_lat, center_long, feature, parent):
     dms_center_lat = decimal_degree_2dms(round(center_lat, 4))
     dms_center_long = decimal_degree_2dms(round(center_long, 4))
-    elevation_url = "https://geocontext.kartoza.com" \
+    elevation_url = "https://geocontext.kartoza.com/api/v1/geocontext/value/group/%s/%s/elevation_group/?format=json" \
                     % (center_long, center_lat)
     elevation_response_text = json_response(elevation_url)
     if elevation_response_text is not None:
