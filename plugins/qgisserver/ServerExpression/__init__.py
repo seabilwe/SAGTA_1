@@ -113,7 +113,6 @@ def map_decl(center_lat, center_long, feature, parent):
             mag_response_json = json.loads(mag_response_text)["result"][0]
         except json.decoder.JSONDecodeError:
             # Handle JSON decoding error if the response is malformed
-            QgsMessageLog.logMessage("Error accessing NOAA Magnetic Declination calculator.", 'MagDecl', Qgis.Warning)
             return "NOAA Magnetic Declination unavailable"
         
         # Extract the magnetic declination and annual change values
@@ -139,7 +138,6 @@ def map_decl(center_lat, center_long, feature, parent):
         return formatted_label
     else:
         # If no valid data is available, log the message and return a default message
-        QgsMessageLog.logMessage("Magnetic declination data unavailable.", 'MagDecl', Qgis.Warning)
         return "Magnetic declination data unavailable"
         
 class ServerExpressionPlugin:
