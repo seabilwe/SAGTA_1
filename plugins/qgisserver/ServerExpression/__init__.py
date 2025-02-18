@@ -119,6 +119,12 @@ def map_decl(center_lat, center_long, feature, parent):
         # Extract the magnetic declination and annual change values
         magnetic_declination = mag_response_json.get("declination", 0)
         annual_change = mag_response_json.get("declination_sv", 0)
+
+        # --- Southern Hemisphere Handling ---
+        # If the map center is in the Southern Hemisphere, force both values to be westerly.
+        if float(center_lat) < 0:
+            magnetic_declination = -abs(magnetic_declination)
+            annual_change = -abs(annual_change)
         
         # Convert both magnetic declination and annual change to degrees, minutes, and direction
         dms_magnetic_decl = dd2dms(round(magnetic_declination, 4))
