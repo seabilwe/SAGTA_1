@@ -1,5 +1,5 @@
 # __init__.py (QGIS Server plugin)
-from qgis.core import qgsfunction, QgsMessageLog, Qgis
+from qgis.core import qgsfunction, QgsMessageLog, Qgis, QgsExpression
 import urllib.parse
 import urllib.request
 import json
@@ -52,3 +52,14 @@ def map_decl(center_lat, center_long, feature, parent):
     else:
         ann_str = f"{deg_ann}°{min_ann}′ {hemi_ann} per year"
     return f"Mean magnetic declination {decl_str}\nMean annual change {ann_str}"
+
+
+class ServerExpressionPlugin:
+    def __init__(self):
+        QgsMessageLog.logMessage('Loading expressions', 'ServerExpression', Qgis.Info)
+        QgsExpression.registerFunction(map_decl)
+
+
+def serverClassFactory(serverIface):
+    _ = serverIface
+    return ServerExpressionPlugin()
