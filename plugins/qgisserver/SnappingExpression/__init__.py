@@ -187,7 +187,7 @@ def transform_coordinates(x, y, curr_crs, target_crs):
 class SnappingPlugin:
     def __init__(self):
         QgsMessageLog.logMessage('Loading expressions', 'ServerExpression', Qgis.Info)
-        QgsExpression.registerFunction(get_deg_min_sec)
+        # QgsExpression.registerFunction(get_deg_min_sec)
 
 
 def serverClassFactory(serverIface):
