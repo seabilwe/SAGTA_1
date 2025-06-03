@@ -1,5 +1,5 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="3.42.3-Münster" saveDateTime="2025-05-30T14:20:23" projectname="" saveUserFull="Jeremy" saveUser="jeremy">
+<qgis version="3.42.3-Münster" saveDateTime="2025-05-30T14:20:53" projectname="" saveUserFull="Jeremy" saveUser="jeremy">
   <homePath path=""/>
   <title></title>
   <transaction mode="AutomaticGroups"/>
@@ -123,14 +123,14 @@
           <Option name="wmsShortName" type="QString" value="Topographic_Basemap"/>
         </Option>
       </customproperties>
-      <layer-tree-layer id="OSM_Toposheets_NGI_1e993297_33c9_49a0_9395_0e8e9021ba97" name="South Africa 1in50k Topographic map" expanded="1" checked="Qt::Checked" providerKey="wms" legend_exp="" legend_split_behavior="0" source="crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://htonl.dev.openstreetmap.org/ngi-tiles/tiles/50k/%7Bz%7D/%7Bx%7D/%7B-y%7D.png&amp;zmax=15&amp;zmin=4" patch_size="0,0">
+      <layer-tree-layer id="OSM_Toposheets_NGI_1e993297_33c9_49a0_9395_0e8e9021ba97" name="South Africa 1in50k Topographic map" expanded="1" checked="Qt::Checked" providerKey="wms" legend_exp="" legend_split_behavior="0" source="crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://htonl.dev.openstreetmap.org/ngi-tiles/tiles/50k/%7Bz%7D/%7Bx%7D/%7B-y%7D.png&amp;zmax=15&amp;zmin=0" patch_size="0,0">
         <customproperties>
           <Option type="Map">
             <Option name="expandedLegendNodes" type="invalid"/>
           </Option>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer id="_26e98807_52a6_489f_bfde_8e5aabb2bde4" name="Namibia 1in50k Topographic map" expanded="1" checked="Qt::Checked" providerKey="wms" legend_exp="" legend_split_behavior="0" source="crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://namibia-topo.openstreetmap.org.za/layer/na_sgswa_topo_50k/%7Bz%7D/%7Bx%7D/%7By%7D.png&amp;zmax=15&amp;zmin=4" patch_size="-1,-1">
+      <layer-tree-layer id="_26e98807_52a6_489f_bfde_8e5aabb2bde4" name="Namibia 1in50k Topographic map" expanded="1" checked="Qt::Checked" providerKey="wms" legend_exp="" legend_split_behavior="0" source="crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://namibia-topo.openstreetmap.org.za/layer/na_sgswa_topo_50k/%7Bz%7D/%7Bx%7D/%7By%7D.png&amp;zmax=15&amp;zmin=0" patch_size="-1,-1">
         <customproperties>
           <Option type="Map">
             <Option name="expandedLegendNodes" type="invalid"/>
@@ -1736,7 +1736,7 @@
         <ymax>85.05112877980660357</ymax>
       </wgs84extent>
       <id>OSM_Toposheets_NGI_1e993297_33c9_49a0_9395_0e8e9021ba97</id>
-      <datasource>crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://htonl.dev.openstreetmap.org/ngi-tiles/tiles/50k/%7Bz%7D/%7Bx%7D/%7B-y%7D.png&amp;zmax=15&amp;zmin=4</datasource>
+      <datasource>crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://htonl.dev.openstreetmap.org/ngi-tiles/tiles/50k/%7Bz%7D/%7Bx%7D/%7B-y%7D.png&amp;zmax=15&amp;zmin=0</datasource>
       <shortname>sa_topographic_map_ngi</shortname>
       <title>South Africa 1in50k Topographic map</title>
       <abstract>The 1:50 000 topographical maps provide full coverage of South Africa. They accurately depict the location of natural and man-made features by means of symbols and colour, and elevation by means of spot-heights and contours (20m interval). Additional information includes place names, boundaries, magnetic data, etc. These maps contain essential information for planning and decision making but also have many other uses. The 1:50 000 topographical maps are generally compiled from aerial photographs. A standard 1:50 000 map sheet covers a rectangle of 15 minutes of latitude by 15 minutes of longitude or approximately 640 squarekilometres.
@@ -1971,7 +1971,7 @@ Ellipsoid : WGS84, sheets prior to 1999 Clarke 1880 (modified)</abstract>
         <ymax>85.05112877980660357</ymax>
       </wgs84extent>
       <id>_26e98807_52a6_489f_bfde_8e5aabb2bde4</id>
-      <datasource>crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://namibia-topo.openstreetmap.org.za/layer/na_sgswa_topo_50k/%7Bz%7D/%7Bx%7D/%7By%7D.png&amp;zmax=15&amp;zmin=4</datasource>
+      <datasource>crs=EPSG:3857&amp;format&amp;http-header:referer=&amp;tilePixelRatio=1&amp;type=xyz&amp;url=https://namibia-topo.openstreetmap.org.za/layer/na_sgswa_topo_50k/%7Bz%7D/%7Bx%7D/%7By%7D.png&amp;zmax=15&amp;zmin=0</datasource>
       <shortname>namibia_topographic_map</shortname>
       <title>Namibia 1in50k Topographic map</title>
       <abstract>The 1:50 000 topographical maps provide full coverage of Namibia.</abstract>
