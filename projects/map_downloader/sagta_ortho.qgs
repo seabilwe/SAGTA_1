@@ -45,7 +45,7 @@
           <Option/>
         </customproperties>
       </layer-tree-layer>
-      <layer-tree-layer patch_size="-1,-1" name="20m contours" id="contours_20m_77d414d4_d765_432d_8c4f_ec76aeac3c57" expanded="1" legend_split_behavior="0" checked="Qt::Checked" legend_exp="" source="dbname='lizmap' host=localhost port=5433 key='fid' estimatedmetadata=true srid=4326 type=MultiLineString checkPrimaryKeyUnicity='0' table=&quot;public&quot;.&quot;contours_20m&quot; (geom)" providerKey="postgres">
+      <layer-tree-layer patch_size="-1,-1" name="20m contours" id="contours_20m_77d414d4_d765_432d_8c4f_ec76aeac3c57" expanded="1" legend_split_behavior="0" checked="Qt::Checked" legend_exp="" source="service='sagta_local' key='fid' srid=4326 type=MultiLineString checkPrimaryKeyUnicity='0' table=&quot;public&quot;.&quot;contours_20m&quot; (geom)" providerKey="postgres">
         <customproperties>
           <Option/>
         </customproperties>
@@ -912,7 +912,7 @@
         <ymax>-22.03529167175292969</ymax>
       </wgs84extent>
       <id>contours_20m_77d414d4_d765_432d_8c4f_ec76aeac3c57</id>
-      <datasource>dbname='lizmap' host=localhost port=5433 key='fid' estimatedmetadata=true srid=4326 type=MultiLineString checkPrimaryKeyUnicity='0' table="public"."contours_20m" (geom)</datasource>
+      <datasource>service='sagta_local' key='fid' srid=4326 type=MultiLineString checkPrimaryKeyUnicity='0' table="public"."contours_20m" (geom)</datasource>
       <layername>20m contours</layername>
       <srs>
         <spatialrefsys nativeFormat="Wkt">
