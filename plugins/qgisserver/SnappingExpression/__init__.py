@@ -1,186 +1,142 @@
+import math
+
 from qgis.core import QgsCoordinateReferenceSystem, QgsProject, QgsPointXY, QgsCoordinateTransform, QgsMessageLog, \
     Qgis, QgsExpression
 from qgis.utils import qgsfunction
 
+# ---------------------------------------------------------------------------
+# Grid interval per print scale (degrees).
+#
+# KEEP IN SYNC with GRID_INTERVAL_BANDS in custom_grid_label.py and in the
+# QGIS Server plugins (custom_grid_label/customgridlabel/gridlabelfunctions.py
+# and SnappingExpression/__init__.py).
+#
+# (min scale inclusive, max scale exclusive, interval in degrees)
+# ---------------------------------------------------------------------------
+GRID_INTERVAL_BANDS = (
+    (4750, 5250, 10 / 3600),       # 1:5 000   -> 10"
+    (9500, 10500, 15 / 3600),      # 1:10 000  -> 15"
+    (23000, 27000, 1 / 60),        # 1:25 000  -> 1'
+    (48000, 52000, 1 / 60),        # 1:50 000  -> 1'
+    (98000, 110000, 2 / 60),       # 1:100 000 -> 2'
+    (140000, math.inf, 4 / 60),    # 1:150 000 and smaller scales -> 4'
+)
+NICE_INTERVALS = (5 / 3600, 10 / 3600, 15 / 3600, 30 / 3600,
+                  1 / 60, 2 / 60, 4 / 60)
+TARGET_CELL_MM = 40
+METRES_PER_DEGREE = 110574
+
+
+def grid_interval_degrees(map_scale):
+    """Returns the grid interval (decimal degrees) for a print scale."""
+    map_scale = float(map_scale)
+    for lower, upper, interval in GRID_INTERVAL_BANDS:
+        if lower <= map_scale < upper:
+            return interval
+    min_cell_degrees = (TARGET_CELL_MM / 1000 * map_scale) / METRES_PER_DEGREE
+    for interval in NICE_INTERVALS:
+        if interval >= min_cell_degrees:
+            return interval
+    return NICE_INTERVALS[-1]
+
 
 @qgsfunction(args='auto', group='sagta')
-def snap_x_axis(x_min, y_max, map_scale, map_crs, geo_crs, feature, parent):
-    """Calculates the snap x-coordinate for the top-left corner of the layout.
-    :param x_min: The minimum x-coordinate of the bounding box
-    :type x_min: float
-    
-    :param y_max: The maximum y-coordinate of the bounding box
-    :type y_max: float
+def snap_x_axis(x_min, map_scale, map_crs, geo_crs, feature, parent, context):
+    """Snaps the left edge of the map to the nearest grid line.
 
-    :param map_scale: The scale of the current map layout
+    Used as the data-defined "X min" of the layout map, e.g.
+    snap_x_axis(xmin(transform(@map_extent, @map_crs, 'EPSG:4326')),
+                @map_scale, @map_crs, 'EPSG:4326')
+
+    :param x_min: Left edge of the map extent in geographic coordinates
+    :type x_min: float
+
+    :param map_scale: The scale of the current map
     :type map_scale: float
-    
-    :param map_crs: Map coordinate system
+
+    :param map_crs: Map coordinate system (e.g. EPSG:3857)
     :type map_crs: str
-    
-    :param geo_crs: Geographic coordinate system used for transformation
+
+    :param geo_crs: Geographic coordinate system of x_min (e.g. EPSG:4326)
     :type geo_crs: str
 
-    :param feature: QGIS function property
-    :type feature: property
-
-    :param parent: QGIS function property
-    :type parent: property
-    
-    :return: The snap Y-coordinate
+    :return: The snapped x-coordinate in the map CRS
     :rtype: float
     """
-
-    # Converts the decimal degrees to degrees, minutes, seconds
-    deg, min_value, sec = get_deg_min_sec(x_min)
-
-    snap_min = get_snap_min(map_scale, min_value, sec)
-    # Calculates the X-axis snapping coordinate
-    snap_coordinate = deg + (snap_min / 60)
-
-    # Transforms the geographic coordinates to the map coordinates
-    x, y = transform_coordinates(snap_coordinate, y_max, QgsCoordinateReferenceSystem(geo_crs),
-                                 QgsCoordinateReferenceSystem(map_crs))
-
+    snapped_lon = snap_to_grid(x_min, map_scale)
+    _, centre_lat = map_centre(context, map_crs, geo_crs)
+    x, _ = transform_coordinates(snapped_lon, centre_lat, geo_crs, map_crs)
     return x
 
 
 @qgsfunction(args='auto', group='sagta')
-def snap_y_axis(x_min, y_max, map_scale, map_crs, geo_crs, feature, parent):
-    """Calculates the snap y-coordinate for the top-left corner of the layout.
-    :param x_min: The minimum x-coordinate of the bounding box
-    :type x_min: float
-    
-    :param y_max: The maximum y-coordinate of the bounding box
+def snap_y_axis(y_max, map_scale, map_crs, geo_crs, feature, parent, context):
+    """Snaps the top edge of the map to the nearest grid line.
+
+    Used as the data-defined "Y max" of the layout map, e.g.
+    snap_y_axis(y_max(transform(@map_extent, @map_crs, 'EPSG:4326')),
+                @map_scale, @map_crs, 'EPSG:4326')
+
+    :param y_max: Top edge of the map extent in geographic coordinates
     :type y_max: float
 
-    :param map_scale: The scale of the current map layout
+    :param map_scale: The scale of the current map
     :type map_scale: float
-    
-    :param map_crs: Map coordinate system
+
+    :param map_crs: Map coordinate system (e.g. EPSG:3857)
     :type map_crs: str
-    
-    :param geo_crs: Geographic coordinate system used for transformation
+
+    :param geo_crs: Geographic coordinate system of y_max (e.g. EPSG:4326)
     :type geo_crs: str
 
-    :param feature: QGIS function property
-    :type feature: property
-
-    :param parent: QGIS function property
-    :type parent: property
-    
-    :return: The snap y-coordinate
+    :return: The snapped y-coordinate in the map CRS
     :rtype: float
     """
-
-    # Converts the decimal degrees to degrees, minutes, seconds
-    deg, min_value, sec = get_deg_min_sec(abs(y_max))
-
-    snap_min = get_snap_min(map_scale, min_value, sec)
-    snap_coordinate = -(deg + (snap_min / 60))
-
-    # Transforms the geographic coordinates to the map coordinates
-    x, y = transform_coordinates(x_min, snap_coordinate, QgsCoordinateReferenceSystem(geo_crs),
-                                 QgsCoordinateReferenceSystem(map_crs))
-
+    snapped_lat = snap_to_grid(y_max, map_scale)
+    centre_lon, _ = map_centre(context, map_crs, geo_crs)
+    _, y = transform_coordinates(centre_lon, snapped_lat, geo_crs, map_crs)
     return y
 
 
-def get_snap_min(map_scale, _min, sec):
-    """Determines the snap coordinate for the provided minute depending on the
-    map scale.
-    
-    :param map_scale: The map scale used by the current map
-    :type map_scale: float
-    
-    :param _min: The minute value of the current top-left position
-    :type _min: int
-    
-    :param sec: The seconds of the current top-left position
-    :type sec: float
-    
-    :return: The snap coordinate based on the scale
-    :rtype: float
+def snap_to_grid(value, map_scale):
+    """Rounds a coordinate (decimal degrees) to the nearest grid line."""
+    interval = grid_interval_degrees(map_scale)
+    return round(math.floor(float(value) / interval + 0.5) * interval, 10)
+
+
+def map_centre(context, map_crs, geo_crs):
+    """Centre of the current map extent in geographic coordinates.
+
+    Only used to pick the other coordinate for the CRS transform; falls back
+    to 0, 0 if the extent is not available.
     """
-
-    if 23000 <= map_scale < 27000 or 48000 <= map_scale < 52000:  # 25k and 50k:
-        if sec >= 30:
-            # Rounds the minute value up by 1
-            snap_min = _min + 1
-        else:
-            # Leave the minute value as is
-            snap_min = _min
-    elif 98000 <= map_scale < 110000:  # 100k:
-        if (_min / 2 - abs(_min / 2)) >= 0.5:
-            # Rounds the minute value up by 2
-            snap_min = _min + 2
-            if snap_min % 2 == 1:  # Value should be even
-                snap_min = _min + 1
-        else:
-            # Leave the minute value as is
-            snap_min = _min
-            if snap_min % 2 == 1:  # Value should be even
-                snap_min = _min + 1
-    elif map_scale >= 140000:  # 150k
-        remainder = (_min / 4) - float(int(_min / 4))
-        if 0 < remainder <= 0.25:
-            snap_min = _min - 1
-        elif 0.25 < remainder <= 0.5:
-            snap_min = _min + 2
-        elif 0.5 < remainder <= 0.75:
-            snap_min = _min + 1
-        else:
-            # Leave the minute value as is
-            snap_min = _min
-
-    return snap_min
-
-
-def get_deg_min_sec(dd_value):
-    """Calculates and returns the degrees, minutes, and seconds from the provided
-    decimal degree value.
-    
-    :param dd_value: Decimal degrees value
-    :type dd_value: float
-    
-    :return: degrees, minutes, and seconds
-    :rtype: int/float
-    """
-
-    deg = int(dd_value)  # Degrees
-    minutes = int((dd_value - deg) * 60)  # Minutes
-
-    min_tmp = minutes / 60
-    sec = (dd_value - deg - min_tmp) * 3600  # Seconds
-
-    return deg, minutes, sec
+    try:
+        extent = context.variable('map_extent') if context else None
+        if extent:
+            centre = extent.centroid().asPoint()
+            return transform_coordinates(centre.x(), centre.y(), map_crs, geo_crs)
+    except Exception:
+        pass
+    return 0.0, 0.0
 
 
 def transform_coordinates(x, y, curr_crs, target_crs):
-    """Transforms coordinates from one coordinate system to another
-    :param x: Y-coordinate
-    :type x: float
-    
-    :param y: X-coordinate
-    :type y: float
-    
-    :param curr_crs: Current coordinate system of the coordinates
-    :type curr_crs: QgsCoordinateReferenceSystem
-    
-    :param target_crs: Coordinate system to which the coordinates should be converted
-    :type target_crs: QgsCoordinateReferenceSystem
-    
+    """Transforms coordinates from one coordinate system to another.
+
+    :param curr_crs: Current coordinate system (auth id string or QgsCoordinateReferenceSystem)
+    :param target_crs: Target coordinate system (auth id string or QgsCoordinateReferenceSystem)
+
     :return: X- and Y-coordinates
     :rtype: float
     """
+    if not isinstance(curr_crs, QgsCoordinateReferenceSystem):
+        curr_crs = QgsCoordinateReferenceSystem(curr_crs)
+    if not isinstance(target_crs, QgsCoordinateReferenceSystem):
+        target_crs = QgsCoordinateReferenceSystem(target_crs)
 
     transform_context = QgsProject.instance().transformContext()
     xform = QgsCoordinateTransform(curr_crs, target_crs, transform_context)
-
-    # Creates and uses a temporary point to perform the transformation
-    point = QgsPointXY(x, y)
-    pt = xform.transform(point)
-
+    pt = xform.transform(QgsPointXY(float(x), float(y)))
     return pt.x(), pt.y()
 
 
