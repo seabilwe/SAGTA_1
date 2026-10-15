@@ -1,12 +1,53 @@
 import math
-import typing
-from string import ascii_uppercase
 
 from qgis.core import *
 from qgis.gui import *
+
 from qgis.PyQt.QtCore import *
 
 GROUP_NAME = 'Plugin - Custom grid label'
+
+# ---------------------------------------------------------------------------
+# Grid interval per print scale (degrees).
+#
+# KEEP IN SYNC with GRID_INTERVAL_BANDS in snapping_expression.py and in the
+# QGIS Server plugins (custom_grid_label/customgridlabel/gridlabelfunctions.py
+# and SnappingExpression/__init__.py).
+#
+# (min scale inclusive, max scale exclusive, interval in degrees)
+# ---------------------------------------------------------------------------
+GRID_INTERVAL_BANDS = (
+    (4750, 5250, 10 / 3600),       # 1:5 000   -> 10"
+    (9500, 10500, 15 / 3600),      # 1:10 000  -> 15"
+    (23000, 27000, 1 / 60),        # 1:25 000  -> 1'
+    (48000, 52000, 1 / 60),        # 1:50 000  -> 1'
+    (98000, 110000, 2 / 60),       # 1:100 000 -> 2'
+    (140000, math.inf, 4 / 60),    # 1:150 000 and smaller scales -> 4'
+                                   # (z_sa / z_global_thematic multiply this value,
+                                   #  so it must stay 4' for those projects)
+)
+
+# "Round" intervals used for any other scale, so the grid never collapses
+# into a dense mesh when the layout is zoomed to an unlisted scale.
+NICE_INTERVALS = (5 / 3600, 10 / 3600, 15 / 3600, 30 / 3600,
+                  1 / 60, 2 / 60, 4 / 60)
+TARGET_CELL_MM = 40  # aim for grid cells of at least ~40 mm on paper
+METRES_PER_DEGREE = 110574  # length of one degree of latitude
+
+
+def grid_interval_degrees(map_scale):
+    """Returns the grid interval (decimal degrees) for a print scale."""
+    map_scale = float(map_scale)
+    for lower, upper, interval in GRID_INTERVAL_BANDS:
+        if lower <= map_scale < upper:
+            return interval
+
+    # Unlisted scale: smallest round interval giving cells >= TARGET_CELL_MM
+    min_cell_degrees = (TARGET_CELL_MM / 1000 * map_scale) / METRES_PER_DEGREE
+    for interval in NICE_INTERVALS:
+        if interval >= min_cell_degrees:
+            return interval
+    return NICE_INTERVALS[-1]
 
 
 @qgsfunction(args='auto', group='sagta')
@@ -15,23 +56,10 @@ def get_grid_interval(map_scale, feature, parent):
     :param map_scale: The map scale e.g. 50 000
     :type map_scale: float
 
-    :return: grid interval
+    :return: grid interval in decimal degrees
     :rtype: float
     """
-
-    current_scale = float(map_scale)
-    if map_scale >= 140000:  # 150k
-        result = 0.066666666668
-    elif 98000 <= map_scale < 110000:  # 100k
-        result = 0.033333333334
-    elif 48000 <= map_scale < 52000:  # 50k
-        result = 0.016666666667
-    elif 23000 <= map_scale < 27000:  # 25k
-        result = 0.016666666667
-    else:
-        result = 0.00416666666675
-
-    return result
+    return grid_interval_degrees(map_scale)
 
 
 @qgsfunction(args='auto', group='sagta')
@@ -50,210 +78,103 @@ def get_grid_label(
         parent,
         context
 ):
-    """Determines the grid label for the provider grid position.
-    :param map_width: Width of the layout
+    """Determines the grid reference label for a grid cell.
+
+    Cells are counted between grid lines from the map edge, so the label works
+    at every scale, page size and latitude, and partial cells at the edges get
+    their own label in sequence:
+      * numbers (1, 2, 3 ...) are counted from the minimum edge (left)
+      * letters (A, B, C ...) are counted from the maximum edge (top) when
+        ``reversed`` is True
+      * partial edge cells with less than EDGE_MIN_FRACTION visible are skipped
+
+    :param map_width: Width (or height, for the y-axis) of the map extent in degrees
     :type map_width: float
 
     :param extent_min: Minimum coordinate value for the extent
     :type extent_min: float
 
-    :param interval_width: Width of each grid
+    :param interval_width: Width of each grid cell in degrees
     :type interval_width: float
 
-    :param current_grid_value: Index of the current grid to be labelled
-    :type current_grid_value: int
+    :param current_grid_value: Coordinate of the grid annotation being labelled
+                               (the cell centre, as the label grid is offset by
+                               half an interval)
+    :type current_grid_value: float
 
     :param use_letters: If set to True, alphabetic chars will be used
     :type use_letters: boolean
 
-    :param reversed: Reverse labelling order
+    :param reversed: Count from the maximum edge (top) instead of the minimum edge
     :type reversed: boolean
 
-    :param map_scale: Scale of the current map (e.g. 50 000)
-    :type map_scale: float
+    The remaining parameters (map_scale, axis, print_layout, print_size) are
+    kept so existing project expressions keep working; they are no longer
+    needed to work out the label.
 
-    :param axis: The used by the layout (this will be x for the y-axis, y for the x-axis)
-    :type axis: string
-
-    :param print_layout: Landscape or Portrait
-    :type print_layout: string
-
-    :param print_size: A3 or A4
-    :type print_size: string
-
-    :return: Returns the label. Alphabetic chars for y-axis, numeric for x-axis
-    :rtype: str/int
+    :return: Alphabetic label for rows, numeric label for columns
+    :rtype: str
     """
+    interval_width = float(interval_width)
+    if not interval_width or interval_width <= 0:
+        return ''
 
-    num_intervals = get_num_intervals(axis, map_scale, print_layout, print_size)  # Number of grid intervals
-    current_position = current_grid_value - extent_min  # Label position
+    lower = float(extent_min)
+    upper = lower + float(map_width)
+    value = float(current_grid_value)
 
-    for i in range(num_intervals):  # Loops through each of the grids
-        interval_start = extent_min + i * interval_width  # Grid start coordinates
-        interval_end = extent_min + (i + 1) * interval_width  # Grid end coordinates
+    # Cell k spans [k * interval, (k + 1) * interval] (grid lines sit on whole
+    # multiples of the interval). Partial cells at the map edges count as cells,
+    # unless less than EDGE_MIN_FRACTION of the cell is visible (a sliver).
+    cell = _grid_index(value, interval_width)
+    if _visible_fraction(cell, lower, upper, interval_width) < EDGE_MIN_FRACTION:
+        return ''
 
-        # Find the grid block which needs to be labelled
-        if interval_start <= current_grid_value < interval_end:
-            result = get_choices_label(
-                i,
-                num_intervals,
-                reverse_order=reversed,
-                choices=ascii_uppercase if use_letters else None,
-            )
-            break
-    else:  # When the loop ends
-        result = 'error'
+    if reversed:
+        # Count from the top (maximum) edge: A = top cell
+        first = _grid_index(upper, interval_width, upper_edge=True)
+        if _visible_fraction(first, lower, upper, interval_width) < EDGE_MIN_FRACTION:
+            first -= 1
+        index = first - cell
+    else:
+        # Count from the left (minimum) edge: 1 = left cell
+        first = _grid_index(lower, interval_width)
+        if _visible_fraction(first, lower, upper, interval_width) < EDGE_MIN_FRACTION:
+            first += 1
+        index = cell - first
 
-    return result
-
-
-def get_num_intervals(axis, map_scale, print_layout, print_size):
-    """Determines the grid label for the provider grid position.
-    :param axis: Axis returned by QGIS
-    :type axis: str
-
-    :param map_scale: Scale of the current map
-    :type map_scale: float
-
-    :param print_layout: Landscape or Portrait
-    :type print_layout: string
-
-    :return: Returns the number of intervals
-    :rtype: int
-    """
-
-    num_intervals = -1
-    if print_layout.lower() == 'landscape':
-        if print_size.lower() == 'a3':  # A3
-            if 23000 <= map_scale < 27000:  # 25k
-                if axis == 'x':
-                    num_intervals = 3
-                else:
-                    num_intervals = 5
-            elif 48000 <= map_scale < 52000:  # 50k
-                if axis == 'x':
-                    num_intervals = 5
-                else:
-                    num_intervals = 10
-            elif 98000 <= map_scale < 110000:  # 100k
-                if axis == 'x':
-                    num_intervals = 5
-                else:
-                    num_intervals = 10
-            elif map_scale >= 140000:  # 150k
-                if axis == 'x':
-                    num_intervals = 4
-                else:
-                    num_intervals = 8
-        else:  # A4
-            if 23000 <= map_scale < 27000:  # 25k
-                if axis == 'x':
-                    num_intervals = 2
-                else:
-                    num_intervals = 4
-            elif 48000 <= map_scale < 52000:  # 50k
-                if axis == 'x':
-                    num_intervals = 4
-                else:
-                    num_intervals = 7
-            elif 98000 <= map_scale < 110000:  # 100k
-                if axis == 'x':
-                    num_intervals = 4
-                else:
-                    num_intervals = 7
-            elif map_scale >= 140000:  # 150k
-                if axis == 'x':
-                    num_intervals = 3
-                else:
-                    num_intervals = 6
-    else:  # Portrait
-        if print_size.lower() == 'a3':  # A3
-            if 23000 <= map_scale < 27000:  # 25k
-                if axis == 'x':
-                    num_intervals = 4
-                else:
-                    num_intervals = 4
-            elif 48000 <= map_scale < 52000:  # 50k
-                if axis == 'x':
-                    num_intervals = 8
-                else:
-                    num_intervals = 7
-            elif 98000 <= map_scale < 110000:  # 100k
-                if axis == 'x':
-                    num_intervals = 8
-                else:
-                    num_intervals = 7
-            elif map_scale >= 140000:  # 150k
-                if axis == 'x':
-                    num_intervals = 6
-                else:
-                    num_intervals = 5
-        else:  # A4
-            if 23000 <= map_scale < 27000:  # 25k
-                if axis == 'x':
-                    num_intervals = 3
-                else:
-                    num_intervals = 3
-            elif 48000 <= map_scale < 52000:  # 50k
-                if axis == 'x':
-                    num_intervals = 5
-                else:
-                    num_intervals = 5
-            elif 98000 <= map_scale < 110000:  # 100k
-                if axis == 'x':
-                    num_intervals = 5
-                else:
-                    num_intervals = 5
-            elif map_scale >= 140000:  # 150k
-                if axis == 'x':
-                    num_intervals = 4
-                else:
-                    num_intervals = 4
-
-    return num_intervals
+    if index < 0:
+        return ''
+    if use_letters:
+        return index_to_letters(index)
+    return str(index + 1)
 
 
-def get_choices_label(
-        current_item: int,
-        total_items: int,
-        reverse_order: typing.Optional[bool] = False,
-        choices: typing.Optional[typing.Iterable] = None,
-        offset: typing.Optional[int] = 1,
-) -> str:
-    """Gets the label for the evaluated grid index.
-    :current_item: Index of current grid
-    :type current_item: int
+EDGE_MIN_FRACTION = 0.1  # partial edge cells narrower than 10% of a cell get no label
 
-    :param total_items: Total number of grids for the x- or y-axis
-    :type total_items: int
 
-    :param reverse_order: True if the labelling order should be reversed
-    :type reverse_order: boolean
+def _grid_index(value, interval, upper_edge=False):
+    """Index of the grid cell containing value (a value exactly on a grid line
+    belongs to the cell above it, or below it when upper_edge is True)."""
+    q = value / interval
+    nearest = round(q)
+    if abs(q - nearest) < 1e-6:
+        return int(nearest) - 1 if upper_edge else int(nearest)
+    return int(math.floor(q))
 
-    :param choices: If the user provides a list of choices
-    :type choices: array
 
-    :param offset: Offset set by the user
-    :type offset: int
+def _visible_fraction(cell, lower, upper, interval):
+    """Share of grid cell `cell` that falls inside [lower, upper]."""
+    start = cell * interval
+    end = start + interval
+    return max(0.0, min(end, upper) - max(start, lower)) / interval
 
-    :return: Returns the label. Alphabetic chars for y-axis, numeric for x-axis
-    :rtype: str/int
-    """
 
-    output_values = None
-
-    if choices is None:  # x-axis, therefore integer values
-        # Increments with one to be sure to include the last grid block case
-        possible_outputs = range(total_items + 1)
-        output_values = list(possible_outputs)[:total_items + 1]
-
-        index = current_item + offset
-
-    else:  # y-axis, therefore alphabetical characters
-        possible_outputs = choices
-        output_values = list(possible_outputs)[:total_items]
-
-        list_len = len(output_values)
-        index = total_items - current_item - offset  # Reverses the order
-
-    return output_values[index]
+def index_to_letters(index):
+    """0 -> A, 25 -> Z, 26 -> AA, 27 -> AB ..."""
+    letters = ''
+    index += 1
+    while index > 0:
+        index, remainder = divmod(index - 1, 26)
+        letters = chr(65 + remainder) + letters
+    return letters
